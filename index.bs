@@ -1,0 +1,23 @@
+<pre class='metadata'>
+Title: Sockets API
+Shortname: common-web-platform-api
+Group: wintercg
+Status: w3c/CG-DRAFT
+Level: none
+URL: https://sockets-api.proposal.wintercg.org/
+Repository: https://github.com/wintercg/proposal-sockets-api
+Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
+Abstract: Sockets API for Non-Browser EcmaScript-based runtimes.
+Markup Shorthands: markdown yes
+</pre>
+<pre class=link-defaults>
+spec:url; type:interface; text:URL
+spec:html; type:attribute; for:Window; text:navigator
+</pre>
+
+Introduction {#intro}
+=====================
+
+*This section is non-normative.*
+
+This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
