@@ -20,7 +20,8 @@ Introduction {#intro}
 
 *This section is non-normative.*
 
-This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
+This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime
+environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
 
 `Socket` interface
 =====================
