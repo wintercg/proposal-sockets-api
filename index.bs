@@ -21,3 +21,47 @@ Introduction {#intro}
 *This section is non-normative.*
 
 This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
+
+`Socket` interface
+=====================
+
+A single interface is defined for all transports (TCP and UDP). A `Socket` can be constructed using
+the global {{connect}} method, or a `connect` method defined on a <a>binding object</a>.
+
+<pre class="idl">
+[Exposed=*]
+interface Socket {
+  readonly attribute ReadableStream readable;
+  readonly attribute WritableStream writable;
+  readonly attribute Promise&lt;undefined> closed;
+};
+</pre>
+
+The terms {{ReadableStream}} and {{WritableStream}} are defined in [[!WHATWG-STREAMS]].
+
+`connect` method {#connect}
+===========================
+
+<pre class="idl">
+[Exposed=*]
+dictionary SocketOptions {
+  unsigned short port;
+  DOMString hostname;
+
+  bool tls?;
+};
+
+[Exposed=*]
+interface Connect {
+  Socket connect(SocketOptions opts);
+}
+</pre>
+
+Binding object {#binding-object}
+================================
+
+The <dfn>binding object</dfn> defines Socket `connect` options. The options it contains can modify the
+behaviour of the `connect` invoked on it. Some of the options it can define:
+
+* TLS settings
+* The HTTP proxy to use for the socket connection
