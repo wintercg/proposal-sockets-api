@@ -45,16 +45,21 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[!WHATWG-STR
 
 <pre class="idl">
 [Exposed=*]
-dictionary SocketOptions {
+dictionary SocketAddress {
   unsigned short port;
   DOMString hostname;
-
-  bool tls?;
 };
+
+typedef (DOMString or SocketAddress) AnySocketAddress;
+
+[Exposed=*]
+dictionary SocketOptions {
+  bool tls?;
+}
 
 [Exposed=*]
 interface Connect {
-  Socket connect(SocketOptions opts);
+  Socket connect(AnySocketAddress address, SocketOptions opts);
 }
 </pre>
 
