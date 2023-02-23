@@ -50,7 +50,7 @@ dictionary SocketAddress {
   DOMString hostname;
 };
 
-typedef (DOMString or SocketAddress) AnySocketAddress;
+typedef (DOMString or SocketAddress or Socket) AnySocketAddress;
 
 [Exposed=*]
 dictionary SocketOptions {
@@ -62,6 +62,15 @@ interface Connect {
   Socket connect(AnySocketAddress address, SocketOptions opts);
 }
 </pre>
+
+StartTls can be handled by taking an existing `Socket` and passing it to `connect`, like so:
+
+```js
+let sock = connect("...");
+// ... some code here ...
+// We want to StartTLS at this point.
+let tlsSock = connect(sock, { tls: true });
+```
 
 Binding object {#binding-object}
 ================================
