@@ -13,6 +13,7 @@ Markup Shorthands: markdown yes
 <pre class=link-defaults>
 spec:url; type:interface; text:URL
 spec:html; type:attribute; for:Window; text:navigator
+spec:html; type:method; for:Connect; text:connect
 </pre>
 
 Introduction {#intro}
@@ -21,20 +22,27 @@ Introduction {#intro}
 *This section is non-normative.*
 
 This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime
-environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
+environments. Existing standard APIs are reused as much as possible, for example ReadableStream
+and WritableStream are used for reading and writing from a socket. Some options are inspired
+by the existing Node.js `net.Socket` API. 
+
 
 `Socket` interface {#socket-interface}
 ======================================
 
-A single interface is defined for all transports (TCP and UDP). A `Socket` can be constructed using
-the global {{connect}} method, or a `connect` method defined on a <a>binding object</a>.
+A `Socket` can be constructed using the global {{connect}} method, or a `connect` method
+defined on a <a>binding object</a>.
 
 <pre class="idl">
 [Exposed=*]
 interface Socket {
   readonly attribute ReadableStream readable;
   readonly attribute WritableStream writable;
+
   readonly attribute Promise&lt;undefined> closed;
+  Promise&lt;undefined> close();
+
+  Socket startTls();
 };
 </pre>
 
@@ -46,15 +54,17 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[!WHATWG-STR
 <pre class="idl">
 [Exposed=*]
 dictionary SocketAddress {
-  unsigned short port;
   DOMString hostname;
+  unsigned short port;
 };
 
 typedef (DOMString or SocketAddress or Socket) AnySocketAddress;
 
+enum SecureTransportKind { "off", "on", "starttls" };
+
 [Exposed=*]
 dictionary SocketOptions {
-  boolean tls;
+  SecureTransportKind secureTransport;
 };
 
 [Exposed=*]
@@ -63,13 +73,30 @@ interface Connect {
 };
 </pre>
 
-StartTls can be handled by taking an existing `Socket` and passing it to `connect`, like so:
+`startTls` method {#starttls}
+=============================
+
+The `startTls` method enables opportunistic TLS which is a requirement for some protocols
+(primarily postgres/mysql and other DB protocols).
+
+The `startTls` method must fail with an exception if the `secureTransport` option set on
+Socket instance it was called on is not equal to "starttls".
+
+In this `secureTransport` mode of operation the Socket begins the
+connection in plain-text, with messages read and written without any encryption. Then once the
+`startTls` method is called on the Socket, the following shall take place:
+
+* the original Socket is closed, though the original connection is kept alive
+* a secure TLS connection is established over that connection
+* a new Socket is created and returned from the `startTls` call
+
+Here is a simple code example showing usage:
 
 ```js
-let sock = connect("...");
+let sock = connect("google.com:443", { secureTransport: "starttls" });
 // ... some code here ...
 // We want to StartTLS at this point.
-let tlsSock = connect(sock, { tls: true });
+let tlsSock = sock.startTls();
 ```
 
 Binding object {#binding-object}
