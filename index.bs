@@ -48,6 +48,21 @@ interface Socket {
 
 The terms {{ReadableStream}} and {{WritableStream}} are defined in [[!WHATWG-STREAMS]].
 
+Instances of {{Socket}} are created with fields described in the following table:
+
+<pre class="simpledef">
+{{readable}}: a {{ReadableStream}} which receives data from the server the socket is connected to
+{{writable}}: a {{WritableStream}} which sends data to the server the socket is connected to
+{{closed}}: a promise that will be rejected (if Socket connection fails or there is another error) or resolved (if the connection is gracefully closed)
+</pre>
+
+Methods available on a {{Socket}} instance are described by the following table:
+
+<pre class="simpledef">
+{{close()}}: closes the socket and its underlying connection
+{{startTls()}}: begins TLS session on the socket connection, see <a>`startTls` method</a>
+</pre>
+
 `connect` method {#connect}
 ===========================
 
@@ -58,7 +73,7 @@ dictionary SocketAddress {
   unsigned short port;
 };
 
-typedef (DOMString or SocketAddress or Socket) AnySocketAddress;
+typedef (DOMString or SocketAddress) AnySocketAddress;
 
 enum SecureTransportKind { "off", "on", "starttls" };
 
@@ -73,10 +88,15 @@ interface Connect {
 };
 </pre>
 
-`startTls` method {#starttls}
+`SocketOptions` dictionary
+---------------------------
+
+
+
+`startTls` method {#starttls-method}
 =============================
 
-The `startTls` method enables opportunistic TLS which is a requirement for some protocols
+The <dfn>`startTls` method</dfn> enables opportunistic TLS which is a requirement for some protocols
 (primarily postgres/mysql and other DB protocols).
 
 The `startTls` method must fail with an exception if the `secureTransport` option set on
