@@ -23,8 +23,8 @@ Introduction {#intro}
 This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime
 environments. It takes a lot of inspiration from the existing Node.js `net.Socket` API.
 
-`Socket` interface
-=====================
+`Socket` interface {#socket-interface}
+======================================
 
 A single interface is defined for all transports (TCP and UDP). A `Socket` can be constructed using
 the global {{connect}} method, or a `connect` method defined on a <a>binding object</a>.
@@ -54,13 +54,13 @@ typedef (DOMString or SocketAddress or Socket) AnySocketAddress;
 
 [Exposed=*]
 dictionary SocketOptions {
-  bool tls?;
-}
+  boolean tls;
+};
 
 [Exposed=*]
 interface Connect {
-  Socket connect(AnySocketAddress address, SocketOptions opts);
-}
+  Socket connect(AnySocketAddress address, optional SocketOptions opts);
+};
 </pre>
 
 StartTls can be handled by taking an existing `Socket` and passing it to `connect`, like so:
