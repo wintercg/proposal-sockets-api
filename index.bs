@@ -63,6 +63,84 @@ Methods available on a {{Socket}} instance are described by the following table:
 {{startTls()}}: begins TLS session on the socket connection, see <a>`startTls` method</a>
 </pre>
 
+`readable` attribute
+--------------------
+
+  <aside class="example">
+    The below example shows typical {{ReadableStream}} usage to read data from a Socket:
+
+    ```javascript
+      const socket = connect("google.com:80");
+
+      const reader = socket.readable.getReader();
+
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) {
+          // the ReadableStream has been closed or cancelled
+          break;
+        }
+        // In many protocols the \`value\` needs to be decoded to be used:
+        const decoder = new TextDecoder();
+        console.log(decoder.decode(value));
+      }
+
+      reader.releaseLock();
+    ```
+  </aside>
+
+`writable` attribute
+--------------------
+
+  <aside class="example">
+    The below example shows typical {{WritableStream}} usage to write data to a Socket:
+
+    ```javascript
+      const socket = connect("google.com:80");
+
+      const writer = socket.writable.getWriter();
+      const encoder = new TextEncoder();
+      writer.write(encoder.encode("GET / HTTP/1.0\r\n\r\n"));
+    ```
+  </aside>
+
+`closed` attribute
+--------------------
+
+
+
+`startTls` method {#starttls-method}
+------------------------------------
+
+The <dfn>`startTls` method</dfn> enables opportunistic TLS which is a requirement for some protocols
+(primarily postgres/mysql and other DB protocols).
+
+<div class="note">
+  The `startTls` method must fail with an exception if the `secureTransport` option set on
+Socket instance it was called on is not equal to "starttls".
+</div>
+
+
+
+In this `secureTransport` mode of operation the Socket begins the
+connection in plain-text, with messages read and written without any encryption. Then once the
+`startTls` method is called on the Socket, the following shall take place:
+
+* the original Socket is closed, though the original connection is kept alive
+* a secure TLS connection is established over that connection
+* a new Socket is created and returned from the `startTls` call
+
+<aside class="example">
+Here is a simple code example showing usage:
+
+```js
+let sock = connect("google.com:443", { secureTransport: "starttls" });
+// ... some code here ...
+// We want to StartTLS at this point.
+let tlsSock = sock.startTls();
+```
+</aside>
+
 `connect` method {#connect}
 ===========================
 
@@ -88,36 +166,65 @@ interface Connect {
 };
 </pre>
 
+The `connect` method performs the following steps:
+
+<ol>
+  <li>A connection is established to the specified `SocketAddress` asynchronously.</li>
+  <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
+  <li>The created {{Socket}} instance is returned immediately.</li>
+  <li>If the connection fails for any reason, the Socket's `closed` promise is rejected with an exception describing why the connection failed.</li>
+  <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
+</ol>
+
+<div class="note">
+  The implementation may consider blocking connections to certain hostname/port combination which can
+  pose a threat of abuse or security vulnerability.
+
+  For example, port 25 may be blocked to prevent abuse of SMTP servers and private IPs can be blocked
+  to avoid connecting to private services hosted locally (or on the server's LAN).
+</div>
+
+
 `SocketOptions` dictionary
 ---------------------------
 
 
+<dl>
+  <dt>
+    <dfn>secureTransport</dfn> member
+  </dt>
+  <dd>
+    The secure transport mode to use. 
+    <dl>
+      <dt>off</dt>
+      <dd>A connection is established in plain text.</dd>
+      <dt>on</dt>
+      <dd>A TLS connection is established using default CAs</dd>
+      <dt>starttls</dt>
+      <dd>Initially a connection is established in plain text, the connection continues in plain text until the <a>`startTls` method</a> is called</dd>
+    </dl>
+  </dd>
+</dl>
 
-`startTls` method {#starttls-method}
-=============================
+`AnySocketAddress` type
+---------------------------
 
-The <dfn>`startTls` method</dfn> enables opportunistic TLS which is a requirement for some protocols
-(primarily postgres/mysql and other DB protocols).
 
-The `startTls` method must fail with an exception if the `secureTransport` option set on
-Socket instance it was called on is not equal to "starttls".
+<dl>
+  <dt>
+    <dfn>SocketAddress</dfn> dictionary
+  </dt>
+  <dd>
+    The address to connect to. For example `{ hostname: "google.com", port: 443 }`.
+    <dl>
+      <dt>hostname</dt>
+      <dd>A connection is established in plain text.</dd>
+      <dt>port</dt>
+      <dd>A TLS connection is established using default CAs</dd>
+    </dl>
+  </dd>
+</dl>
 
-In this `secureTransport` mode of operation the Socket begins the
-connection in plain-text, with messages read and written without any encryption. Then once the
-`startTls` method is called on the Socket, the following shall take place:
-
-* the original Socket is closed, though the original connection is kept alive
-* a secure TLS connection is established over that connection
-* a new Socket is created and returned from the `startTls` call
-
-Here is a simple code example showing usage:
-
-```js
-let sock = connect("google.com:443", { secureTransport: "starttls" });
-// ... some code here ...
-// We want to StartTLS at this point.
-let tlsSock = sock.startTls();
-```
 
 Binding object {#binding-object}
 ================================
