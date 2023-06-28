@@ -24,8 +24,12 @@ Introduction {#intro}
 This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime
 environments. Existing standard APIs are reused as much as possible, for example ReadableStream
 and WritableStream are used for reading and writing from a socket. Some options are inspired
-by the existing Node.js `net.Socket` API. 
+by the existing Node.js `net.Socket` API.
 
+The API described here is already implemented by Cloudflare Workers.
+Workers-specific documentation is available in
+https://developers.cloudflare.com/workers/runtime-apis/tcp-sockets/. This spec shares many
+similarities with that document.
 
 `Socket` interface {#socket-interface}
 ======================================
@@ -53,7 +57,7 @@ Instances of {{Socket}} are created with fields described in the following table
 <pre class="simpledef">
 {{readable}}: a {{ReadableStream}} which receives data from the server the socket is connected to
 {{writable}}: a {{WritableStream}} which sends data to the server the socket is connected to
-{{closed}}: a promise that will be rejected (if Socket connection fails or there is another error) or resolved (if the connection is gracefully closed)
+{{closed}}: a promise that will be rejected (if socket connection fails or there is another error) or resolved (if the connection is gracefully closed)
 </pre>
 
 Methods available on a {{Socket}} instance are described by the following table:
@@ -67,7 +71,7 @@ Methods available on a {{Socket}} instance are described by the following table:
 --------------------
 
   <aside class="example">
-    The below example shows typical {{ReadableStream}} usage to read data from a Socket:
+    The below example shows typical {{ReadableStream}} usage to read data from a socket:
 
     ```javascript
       const socket = connect("google.com:80");
@@ -89,11 +93,15 @@ Methods available on a {{Socket}} instance are described by the following table:
     ```
   </aside>
 
+The ReadableStream operates in non-byte mode, that is the `type` parameter to the
+ReadableStream constructor is not set.
+This means the stream's controller is {{ReadableStreamDefaultController}}.
+
 `writable` attribute
 --------------------
 
   <aside class="example">
-    The below example shows typical {{WritableStream}} usage to write data to a Socket:
+    The below example shows typical {{WritableStream}} usage to write data to a socket:
 
     ```javascript
       const socket = connect("google.com:80");
@@ -107,6 +115,20 @@ Methods available on a {{Socket}} instance are described by the following table:
 `closed` attribute
 --------------------
 
+The `closed` promise can be used to keep track of the socket state. It gets resolved under the
+following circumstances:
+
+* the `close` method is called on the socket
+* the socket was constructed with the `allowHalfOpen` parameter set to `false` and the remote 
+    connection sends a FIN packet
+
+// TODO: What happens when connection gets reset by peer (i.e. RST packet without FIN)?
+// TODO: What happens when both readable and writable are closed?
+
+It can also be rejected with an exception under the following circumstances:
+
+* a socket connection could not be established, either because it was rejected explicitly or due to
+    a transient issue with the runtime
 
 
 `startTls` method {#starttls-method}
@@ -117,18 +139,18 @@ The <dfn>`startTls` method</dfn> enables opportunistic TLS which is a requiremen
 
 <div class="note">
   The `startTls` method must fail with an exception if the `secureTransport` option set on
-Socket instance it was called on is not equal to "starttls".
+socket instance it was called on is not equal to "starttls".
 </div>
 
 
 
-In this `secureTransport` mode of operation the Socket begins the
+In this `secureTransport` mode of operation the socket begins the
 connection in plain-text, with messages read and written without any encryption. Then once the
-`startTls` method is called on the Socket, the following shall take place:
+`startTls` method is called on the socket, the following shall take place:
 
-* the original Socket is closed, though the original connection is kept alive
+* the original socket is closed, though the original connection is kept alive
 * a secure TLS connection is established over that connection
-* a new Socket is created and returned from the `startTls` call
+* a new socket is created and returned from the `startTls` call
 
 <aside class="example">
 Here is a simple code example showing usage:
@@ -157,7 +179,8 @@ enum SecureTransportKind { "off", "on", "starttls" };
 
 [Exposed=*]
 dictionary SocketOptions {
-  SecureTransportKind secureTransport;
+  SecureTransportKind secureTransport = "off";
+  boolean allowHalfOpen = false;
 };
 
 [Exposed=*]
@@ -172,12 +195,12 @@ The `connect` method performs the following steps:
   <li>A connection is established to the specified `SocketAddress` asynchronously.</li>
   <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
   <li>The created {{Socket}} instance is returned immediately.</li>
-  <li>If the connection fails for any reason, the Socket's `closed` promise is rejected with an exception describing why the connection failed.</li>
+  <li>If the connection fails for any reason, the socket's `closed` promise is rejected with an exception describing why the connection failed.</li>
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
 <div class="note">
-  The implementation may consider blocking connections to certain hostname/port combination which can
+  The implementation may consider blocking connections to certain hostname/port combinations which can
   pose a threat of abuse or security vulnerability.
 
   For example, port 25 may be blocked to prevent abuse of SMTP servers and private IPs can be blocked
@@ -201,7 +224,21 @@ The `connect` method performs the following steps:
       <dt>on</dt>
       <dd>A TLS connection is established using default CAs</dd>
       <dt>starttls</dt>
-      <dd>Initially a connection is established in plain text, the connection continues in plain text until the <a>`startTls` method</a> is called</dd>
+      <dd>Initially the same as the `off` option, the connection continues in plain text
+      until the <a>`startTls` method</a> is called</dd>
+    </dl>
+  </dd>
+  <dt>
+    <dfn>allowHalfOpen</dfn> member
+  </dt>
+  <dd>
+    <dl>
+      <dt>false</dt>
+      <dd>The WritableStream- and the socket instance- will be automatically closed when a
+      FIN packet is received from the remote connection.</dd>
+      <dt>true</dt>
+      <dd>When a FIN packet is received, the socket will enter a "half-open" state where the
+    ReadableStream is closed but the WritableStream can still be written to.</dd>
     </dl>
   </dd>
 </dl>
@@ -223,13 +260,19 @@ The `connect` method performs the following steps:
       <dd>A TLS connection is established using default CAs</dd>
     </dl>
   </dd>
+  <dt>
+    DOMString
+  </dt>
+  <dd>
+    A hostname/port combo separated by a colon. For example `"google.com:443"`.
+  </dd>
 </dl>
 
 
 Binding object {#binding-object}
 ================================
 
-The <dfn>binding object</dfn> defines Socket `connect` options. The options it contains can modify the
+The <dfn>binding object</dfn> defines socket `connect` options. The options it contains can modify the
 behaviour of the `connect` invoked on it. Some of the options it can define:
 
 * TLS settings
