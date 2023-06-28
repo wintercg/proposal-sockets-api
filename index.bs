@@ -127,22 +127,21 @@ following circumstances:
 
 It can also be rejected with an exception under the following circumstances:
 
-* a socket connection could not be established, either because it was rejected explicitly or due to
-    a transient issue with the runtime
+* a socket connection could not be established, either because the address/port combo requested is
+    blocked or due to a transient issue with the runtime
 
 
 `startTls` method {#starttls-method}
 ------------------------------------
 
-The <dfn>`startTls` method</dfn> enables opportunistic TLS which is a requirement for some protocols
-(primarily postgres/mysql and other DB protocols).
+The <dfn>`startTls` method</dfn> enables opportunistic TLS (otherwise known as
+[StartTLS](https://en.wikipedia.org/wiki/Opportunistic_TLS)) which is a requirement for some
+protocols (primarily postgres/mysql and other DB protocols).
 
 <div class="note">
   The `startTls` method must fail with an exception if the `secureTransport` option set on
 socket instance it was called on is not equal to "starttls".
 </div>
-
-
 
 In this `secureTransport` mode of operation the socket begins the
 connection in plain-text, with messages read and written without any encryption. Then once the
@@ -162,6 +161,14 @@ let sock = connect("google.com:443", { secureTransport: "starttls" });
 let tlsSock = sock.startTls();
 ```
 </aside>
+
+The original readers and writers based off the original socket will no longer work. You must create
+new readers and writers from the new socket returned by `startTls`.
+
+<div class="note">
+  The `startTls` method must fail with an exception if called on a TLS socket (i.e. one returned
+  by the `startTls` call)
+</div>
 
 `connect` method {#connect}
 ===========================
@@ -232,6 +239,8 @@ The `connect` method performs the following steps:
     <dfn>allowHalfOpen</dfn> member
   </dt>
   <dd>
+    This option is similar to that offered by the Node.js `net` module and allows interoperability
+    with code which utilizes it.
     <dl>
       <dt>false</dt>
       <dd>The WritableStream- and the socket instance- will be automatically closed when a
