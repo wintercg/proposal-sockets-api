@@ -206,6 +206,11 @@ The `connect` method performs the following steps:
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
+At any point during the creation of the {{Socket}} instance, `connect` may throw an exception. One
+case where this can happen is if the input address is incorrectly formatted.
+Errors which occur asynchronously- after the socket instance has been returned- must reject the
+socket's `closed` promise.
+
 <div class="note">
   The implementation may consider blocking connections to certain hostname/port combinations which can
   pose a threat of abuse or security vulnerability.
@@ -213,6 +218,8 @@ The `connect` method performs the following steps:
   For example, port 25 may be blocked to prevent abuse of SMTP servers and private IPs can be blocked
   to avoid connecting to private services hosted locally (or on the server's LAN).
 </div>
+
+
 
 
 `SocketOptions` dictionary
