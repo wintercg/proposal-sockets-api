@@ -119,17 +119,26 @@ The `closed` promise can be used to keep track of the socket state. It gets reso
 following circumstances:
 
 * the `close` method is called on the socket
-* the socket was constructed with the `allowHalfOpen` parameter set to `false` and the remote 
-    connection sends a FIN packet
+* the socket was constructed with the `allowHalfOpen` parameter set to `false`, the ReadableStream
+    is being read from, and the remote connection sends a FIN packet (graceful closure) or a RST
+    packet
 
-// TODO: What happens when connection gets reset by peer (i.e. RST packet without FIN)?
-// TODO: What happens when both readable and writable are closed?
+<div class="note">
+  The current Cloudflare Workers implementation behaves as described above, specifically the 
+  ReadableStream needs to be read until completion for the `closed` promise to resolve, if the
+  ReadableStream is not read then even if the server closes the connection the `closed` promise
+  will not resolve.
+
+  Whether the promise should resolve without the ReadableStream being read is up for discussion.
+</div>
 
 It can also be rejected with an exception under the following circumstances:
 
 * a socket connection could not be established, either because the address/port combo requested is
     blocked or due to a transient issue with the runtime
 
+Cancelling the socket's ReadableStream and closing the socket's WritableStream does not resolve the
+`closed` promise.
 
 `startTls` method {#starttls-method}
 ------------------------------------
