@@ -34,8 +34,9 @@ similarities with that document.
 `Socket` interface {#socket-interface}
 ======================================
 
-A `Socket` can be constructed using the global {{connect}} method, or a `connect` method
-defined on a <a>binding object</a>.
+A `Socket` can be constructed using a {{connect}} method defined in a `sockets` module
+(early implementations may use `vendor:sockets` for the module name),
+or a `connect` method defined on a <a>binding object</a>.
 
 <pre class="idl">
 [Exposed=*]
@@ -74,6 +75,7 @@ Methods available on a {{Socket}} instance are described by the following table:
     The below example shows typical {{ReadableStream}} usage to read data from a socket:
 
     ```javascript
+      import { connect } from 'sockets';
       const socket = connect("google.com:80");
 
       const reader = socket.readable.getReader();
@@ -104,6 +106,7 @@ This means the stream's controller is {{ReadableStreamDefaultController}}.
     The below example shows typical {{WritableStream}} usage to write data to a socket:
 
     ```javascript
+      import { connect } from 'sockets';
       const socket = connect("google.com:80");
 
       const writer = socket.writable.getWriter();
@@ -164,6 +167,7 @@ connection in plain-text, with messages read and written without any encryption.
 Here is a simple code example showing usage:
 
 ```js
+import { connect } from 'sockets';
 let sock = connect("google.com:443", { secureTransport: "starttls" });
 // ... some code here ...
 // We want to StartTLS at this point.
