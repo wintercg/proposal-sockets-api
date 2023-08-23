@@ -132,10 +132,10 @@ following circumstances:
   Whether the promise should resolve without the ReadableStream being read is up for discussion.
 </div>
 
-It can also be rejected with an exception under the following circumstances:
+It can also be rejected with an [[#socket-error]] under the following circumstances:
 
-* a socket connection could not be established, either because the address/port combo requested is
-    blocked or due to a transient issue with the runtime
+* a socket connection could not be established, either because the address/port combo requested is blocked 
+* due to a transient issue with the runtime
 
 Cancelling the socket's ReadableStream and closing the socket's WritableStream does not resolve the
 `closed` promise.
@@ -211,11 +211,11 @@ The `connect` method performs the following steps:
   <li>A connection is established to the specified `SocketAddress` asynchronously.</li>
   <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
   <li>The created {{Socket}} instance is returned immediately.</li>
-  <li>If the connection fails for any reason, the socket's `closed` promise is rejected with an exception describing why the connection failed.</li>
+  <li>If the connection fails for any reason, the socket's `closed` promise is rejected with a [[#socket-error]] exception describing why the connection failed.</li>
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
-At any point during the creation of the {{Socket}} instance, `connect` may throw an exception. One
+At any point during the creation of the {{Socket}} instance, `connect` may throw a [[#socket-error]] exception. One
 case where this can happen is if the input address is incorrectly formatted.
 Errors which occur asynchronously- after the socket instance has been returned- must reject the
 socket's `closed` promise.
@@ -228,8 +228,18 @@ socket's `closed` promise.
   to avoid connecting to private services hosted locally (or on the server's LAN).
 </div>
 
+SocketError {#socket-error}
+---------------------------
 
+`SocketError` is an instance of {{TypeError}}. The error message should start with `"SocketError: "`.
 
+For example,
+
+```javascript
+throw new SocketError('connection failed');
+```
+
+Should result in the following error: `Uncaught SocketError [TypeError]: SocketError: connection failed`.
 
 `SocketOptions` dictionary
 ---------------------------
