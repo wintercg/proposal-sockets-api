@@ -7,36 +7,86 @@ Level: none
 URL: https://sockets-api.proposal.wintercg.org/
 Repository: https://github.com/wintercg/proposal-sockets-api
 Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
+Editor: Ethan Arrowood, Vercel https://vercel.com/, ethan.arrowood@vercel.com
 Abstract: Sockets API for Non-Browser EcmaScript-based runtimes.
 Markup Shorthands: markdown yes
+Markup Shorthands: idl yes
 </pre>
+
 <pre class=link-defaults>
 spec:url; type:interface; text:URL
 spec:html; type:attribute; for:Window; text:navigator
 spec:html; type:method; for:Connect; text:connect
 </pre>
 
-Introduction {#intro}
-=====================
+<h2 id="intro">Introduction</h2>
 
-*This section is non-normative.*
+<div class="non-normative">
+
+<em>This section is non-normative.</em>
 
 This document defines an API for establishing TCP connections in Non-Browser JavaScript runtime
-environments. Existing standard APIs are reused as much as possible, for example ReadableStream
-and WritableStream are used for reading and writing from a socket. Some options are inspired
+environments. Existing standard APIs are reused as much as possible, for example {{ReadableStream}}
+and {{WritableStream}} are used for reading and writing from a [=socket=]. Some options are inspired
 by the existing Node.js `net.Socket` API.
 
-The API described here is already implemented by Cloudflare Workers.
-Workers-specific documentation is available in
-https://developers.cloudflare.com/workers/runtime-apis/tcp-sockets/. This spec shares many
-similarities with that document.
+</div>
 
-`Socket` interface {#socket-interface}
-======================================
+<h2 id="concepts">Concepts</h2>
 
-A `Socket` can be constructed using a {{connect}} method defined in a `sockets` module
-(early implementations may use `vendor:sockets` for the module name),
-or a `connect` method defined on a <a>binding object</a>.
+<h3 id="socket-concept-section">Socket</h3>
+
+A <dfn export id="socket-concept">socket</dfn> represents a TCP connection, from which you can read and write data. A socket begins in a <i>connected</i> state (if the socket fails to connect, an error is thrown). While in a <i>connected</i> state, the socket's {{ReadableStream}} and {{WritableStream}} can be read from and written to respectively.
+
+A socket becomes <i>closed</i> when its {{close()}} method is called. A socket configured with `allowHalfOpen: false` will close itself when it receives a FIN or RST packet in its read stream.
+
+<h3 id="connect-concept-section">Connect</h3>
+
+A socket can be constructed using a <dfn export id="connect-concept">connect</dfn> method defined in a `sockets` module (early implementations may use `vendor:sockets` for the module name), or defined on a [=binding object=].
+
+The connect method is the primary mechanism for creating a [=socket=] instance. It instantiates a socket with a resource identifier and some configuration values. It should syncronously return a socket instance in a <i>connected</i> state (or an error should be thrown).
+
+<h3 id="binding-object-concept">Binding Object</h3>
+
+The <dfn export>binding object</dfn> defines extra socket `connect` options. The options it contains can modify the
+behaviour of the `connect` invoked on it. Some of the options it can define:
+
+<ul>
+  <li>TLS settings</li>
+  <li>The HTTP proxy to use for the socket connection</li>
+</ul>
+
+The binding object is the primary mechanism for runtimes to introduce unique behavior for the [=connect=] method. For example, in order to support more TLS settings, a runtime may introduce a `TLSSocket` interface that extends from {{Socket}}. Thus, the binded {{connect()}} method could then utilize additional properties and configuration values that are controlled by the new `TLSSocket` interface.
+
+<pre highlight="js">
+const tls_socket = new TLSSocket({ key: '...', cert: '...' });
+tls_socket.connect();
+</pre>
+
+Additionally, the binding object does not necessarily have to be an instance of a class, nor does it even have to be JavaScript. It can be any mechanism that exposes the {{connect()}} method. Cloudflare achieves this through [environment bindings](https://developers.cloudflare.com/workers/configuration/bindings/). 
+
+<h2 id="socket-section">Socket</h2>
+
+<h3 id="using-a-socket">Using a socket</h3>
+
+<div class=example>
+A basic example of using connect with an echo server.
+  <pre highlight="js">
+  const socket = connect({ hostname: "my-url.com", port: 43 });
+
+  const writer = socket.writable.getWriter();
+  await writer.write("Hello, World!\r\n");
+
+  const reader = socket.readable.getReader();
+  const result = await reader.read();
+
+  console.log(Buffer.from(result.value).toString()); // Hello, World!
+  </pre>
+</div>
+
+<h3 id="socket-class">The {{Socket}} class</h3>
+
+The {{Socket}} class is a instance of the [=socket=] concept. It should not be instantiated directly (`new Socket()`), but instead created by calling {{connect()}}. A constructor for {{Socket}} is intentially not specified, and is left to implementors to create.
 
 <pre class="idl">
 [Exposed=*]
@@ -47,84 +97,72 @@ interface Socket {
   readonly attribute Promise&lt;undefined> closed;
   Promise&lt;undefined> close();
 
-  Socket startTls();
+  [NewObject] Socket startTls();
 };
 </pre>
 
-The terms {{ReadableStream}} and {{WritableStream}} are defined in [[!WHATWG-STREAMS]].
+The terms {{ReadableStream}} and {{WritableStream}} are defined in [[WHATWG-STREAMS]].
 
-Instances of {{Socket}} are created with fields described in the following table:
+<h3 id="attributes">Attributes</h3>
 
-<pre class="simpledef">
-{{readable}}: a {{ReadableStream}} which receives data from the server the socket is connected to
-{{writable}}: a {{WritableStream}} which sends data to the server the socket is connected to
-{{closed}}: a promise that will be rejected (if socket connection fails or there is another error) or resolved (if the connection is gracefully closed)
-</pre>
+<h4 id="readable-attribute">readable</h4>
 
-Methods available on a {{Socket}} instance are described by the following table:
+The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to 
 
-<pre class="simpledef">
-{{close()}}: closes the socket and its underlying connection
-{{startTls()}}: begins TLS session on the socket connection, see <a>`startTls` method</a>
-</pre>
+<div class="example">
+  The below example shows typical {{ReadableStream}} usage to read data from a socket:
 
-`readable` attribute
---------------------
+  <pre highlight="js">
+    import { connect } from 'sockets';
+    const socket = connect("google.com:80");
 
-  <aside class="example">
-    The below example shows typical {{ReadableStream}} usage to read data from a socket:
+    const reader = socket.readable.getReader();
 
-    ```javascript
-      import { connect } from 'sockets';
-      const socket = connect("google.com:80");
-
-      const reader = socket.readable.getReader();
-
-      while (true) {
-        const { value, done } = await reader.read();
-        if (done) {
-          // the ReadableStream has been closed or cancelled
-          break;
-        }
-        // In many protocols the \`value\` needs to be decoded to be used:
-        const decoder = new TextDecoder();
-        console.log(decoder.decode(value));
+    while (true) {
+      const { value, done } = await reader.read();
+      if (done) {
+        // the ReadableStream has been closed or cancelled
+        break;
       }
+      // In many protocols the \`value\` needs to be decoded to be used:
+      const decoder = new TextDecoder();
+      console.log(decoder.decode(value));
+    }
 
-      reader.releaseLock();
-    ```
-  </aside>
+    reader.releaseLock();
+  </pre>
+</div>
 
 The ReadableStream operates in non-byte mode, that is the `type` parameter to the
 ReadableStream constructor is not set.
 This means the stream's controller is {{ReadableStreamDefaultController}}.
 
-`writable` attribute
---------------------
+<h4 id="writable-attribute">writable</h4>
 
-  <aside class="example">
-    The below example shows typical {{WritableStream}} usage to write data to a socket:
+The {{writable}} attribute is a {{WritableStream}} which sends data to the server the socket is connected to.
 
-    ```javascript
-      import { connect } from 'sockets';
-      const socket = connect("google.com:80");
+<div class="example">
+  The below example shows typical {{WritableStream}} usage to write data to a socket:
 
-      const writer = socket.writable.getWriter();
-      const encoder = new TextEncoder();
-      writer.write(encoder.encode("GET / HTTP/1.0\r\n\r\n"));
-    ```
-  </aside>
+  <pre highlight="js">
+    import { connect } from 'sockets';
+    const socket = connect("google.com:80");
 
-`closed` attribute
---------------------
+    const writer = socket.writable.getWriter();
+    const encoder = new TextEncoder();
+    writer.write(encoder.encode("GET / HTTP/1.0\r\n\r\n"));
+  </pre>
+</div>
 
-The `closed` promise can be used to keep track of the socket state. It gets resolved under the
+<h4 id="closed-attribute">closed</h4>
+
+The {{closed}} attribute is a promise can be used to keep track of the socket state. It gets resolved under the
 following circumstances:
 
-* the `close` method is called on the socket
-* the socket was constructed with the `allowHalfOpen` parameter set to `false`, the ReadableStream
-    is being read from, and the remote connection sends a FIN packet (graceful closure) or a RST
-    packet
+<ul>
+  <li>the {{close()}} method is called on the socket</li>
+  <li>the socket was constructed with the `allowHalfOpen` parameter set to `false`, the ReadableStream is being read from, and the remote connection sends a FIN packet (graceful closure) or a RST packet</li>
+</ul>
 
 <div class="note">
   The current Cloudflare Workers implementation behaves as described above, specifically the 
@@ -135,56 +173,68 @@ following circumstances:
   Whether the promise should resolve without the ReadableStream being read is up for discussion.
 </div>
 
-It can also be rejected with an [[#socket-error]] under the following circumstances:
+It can also be rejected with a [=SocketError=] when a socket connection could not be established under the following circumstances:
 
-* a socket connection could not be established, either because the address/port combo requested is blocked 
-* due to a transient issue with the runtime
+<ul>
+  <li>The address/port combo requested is blocked </li>
+  <li>A transient issue with the runtime</li>
+</ul>
 
-Cancelling the socket's ReadableStream and closing the socket's WritableStream does not resolve the
-`closed` promise.
+Cancelling the socket's ReadableStream and closing the socket's WritableStream does not resolve the `closed` promise.
 
-`startTls` method {#starttls-method}
-------------------------------------
+<h3 id="methods">Methods</h3>
 
-The <dfn>`startTls` method</dfn> enables opportunistic TLS (otherwise known as
-[StartTLS](https://en.wikipedia.org/wiki/Opportunistic_TLS)) which is a requirement for some
-protocols (primarily postgres/mysql and other DB protocols).
+<h4 id="close-method">close()</h4>
 
-<div class="note">
-  The `startTls` method must fail with an exception if the `secureTransport` option set on
-socket instance it was called on is not equal to "starttls".
-</div>
+The {{close()}} method closes the socket and its underlying connection. It returns the same promise as the {{closed}} attribute.
 
-In this `secureTransport` mode of operation the socket begins the
-connection in plain-text, with messages read and written without any encryption. Then once the
-`startTls` method is called on the socket, the following shall take place:
+<h4 id="starttls-method">startTls()</h4>
 
-* the original socket is closed, though the original connection is kept alive
-* a secure TLS connection is established over that connection
-* a new socket is created and returned from the `startTls` call
+The {{startTls()}} method enables opportunistic TLS (otherwise known as [StartTLS](https://en.wikipedia.org/wiki/Opportunistic_TLS)) which is a requirement for some protocols (primarily postgres/mysql and other DB protocols).
+
+In this `secureTransport` mode of operation the socket begins the connection in plain-text, with messages read and written without any encryption. Then once the `startTls` method is called on the socket, the following shall take place:
+
+<ul>
+  <li>the original socket is closed, though the original connection is kept alive</li>
+  <li>a secure TLS connection is established over that connection</li>
+  <li>a new socket is created and returned from the `startTls` call</li>
+</ul>
 
 <aside class="example">
-Here is a simple code example showing usage:
+Here is a simple code example showing usage of the {{startTls()}} method:
 
-```js
-import { connect } from 'sockets';
-let sock = connect("google.com:443", { secureTransport: "starttls" });
-// ... some code here ...
-// We want to StartTLS at this point.
-let tlsSock = sock.startTls();
-```
+  <pre highlight="js">
+  import { connect } from 'sockets';
+  let sock = connect("google.com:443", { secureTransport: "starttls" });
+  // ... some code here ...
+  // We want to StartTLS at this point.
+  let tlsSock = sock.startTls();
+  </pre>
 </aside>
 
 The original readers and writers based off the original socket will no longer work. You must create
 new readers and writers from the new socket returned by `startTls`.
 
-<div class="note">
-  The `startTls` method must fail with an exception if called on a TLS socket (i.e. one returned
-  by the `startTls` call)
+The method must fail with an [=SocketError=] if:
+
+<ul>
+  <li>called on an existing TLS socket</li>
+  <li>the `secureTransport` option defined on the {{Socket}} instance is not equal to `"starttls"`.</li>
+</ul>
+
+<h3 id="socket-error">SocketError</h3>
+
+<dfn export>SocketError</dfn> is an instance of {{TypeError}}. The error message should start with `"SocketError: "`.
+
+<div class="example">
+  An `"connection failed"` SocketError.
+  <pre highlight="js">
+  throw new SocketError('connection failed');
+  </pre>
+  Should result in the following error: `Uncaught SocketError [TypeError]: SocketError: connection failed`.
 </div>
 
-`connect` method {#connect}
-===========================
+<h2 id="connect-section">connect</h2>
 
 <pre class="idl">
 [Exposed=*]
@@ -209,110 +259,76 @@ interface Connect {
 };
 </pre>
 
-The `connect` method performs the following steps:
+The {{connect()}} method performs the following steps:
 
 <ol>
-  <li>A connection is established to the specified `SocketAddress` asynchronously.</li>
+  <li>A connection is established to the specified {{SocketAddress}} asynchronously.</li>
   <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
   <li>The created {{Socket}} instance is returned immediately.</li>
-  <li>If the connection fails for any reason, the socket's `closed` promise is rejected with a [[#socket-error]] exception describing why the connection failed.</li>
+  <li>If the connection fails for any reason, the socket's {{closed}} promise is rejected with a [=SocketError=] describing why the connection failed.</li>
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
-At any point during the creation of the {{Socket}} instance, `connect` may throw a [[#socket-error]] exception. One
-case where this can happen is if the input address is incorrectly formatted.
-Errors which occur asynchronously- after the socket instance has been returned- must reject the
-socket's `closed` promise.
+At any point during the creation of the {{Socket}} instance, `connect` may throw a [=SocketError=]. One case where this can happen is if the input address is incorrectly formatted. Errors which occur asynchronously (after the socket instance has been returned) must reject the socket's {{closed}} promise.
 
 <div class="note">
-  The implementation may consider blocking connections to certain hostname/port combinations which can
-  pose a threat of abuse or security vulnerability.
+  The implementation may consider blocking connections to certain hostname/port combinations which can pose a threat of abuse or security vulnerability.
 
-  For example, port 25 may be blocked to prevent abuse of SMTP servers and private IPs can be blocked
-  to avoid connecting to private services hosted locally (or on the server's LAN).
+  For example, port 25 may be blocked to prevent abuse of SMTP servers and private IPs can be blocked to avoid connecting to private services hosted locally (or on the server's LAN).
 </div>
 
-SocketError {#socket-error}
----------------------------
-
-`SocketError` is an instance of {{TypeError}}. The error message should start with `"SocketError: "`.
-
-For example,
-
-```javascript
-throw new SocketError('connection failed');
-```
-
-Should result in the following error: `Uncaught SocketError [TypeError]: SocketError: connection failed`.
-
-`SocketOptions` dictionary
----------------------------
-
+<h3 id="socketoptions-dictionary">`SocketOptions` dictionary</h3>
 
 <dl>
   <dt>
-    <dfn>secureTransport</dfn> member
+    {{secureTransport}} member
   </dt>
   <dd>
     The secure transport mode to use. 
     <dl>
-      <dt>off</dt>
+      <dt>{{off}}</dt>
       <dd>A connection is established in plain text.</dd>
-      <dt>on</dt>
+      <dt>{{on}}</dt>
       <dd>A TLS connection is established using default CAs</dd>
-      <dt>starttls</dt>
-      <dd>Initially the same as the `off` option, the connection continues in plain text
-      until the <a>`startTls` method</a> is called</dd>
+      <dt>{{starttls}}</dt>
+      <dd>Initially the same as the `off` option, the connection continues in plain text until the {{startTls()}} method is called</dd>
     </dl>
   </dd>
   <dt>
-    <dfn>allowHalfOpen</dfn> member
+    {{allowHalfOpen}} member
   </dt>
   <dd>
-    This option is similar to that offered by the Node.js `net` module and allows interoperability
-    with code which utilizes it.
+    This option is similar to that offered by the Node.js `net` module and allows interoperability with code which utilizes it.
     <dl>
       <dt>false</dt>
       <dd>The WritableStream- and the socket instance- will be automatically closed when a
       FIN packet is received from the remote connection.</dd>
       <dt>true</dt>
-      <dd>When a FIN packet is received, the socket will enter a "half-open" state where the
-    ReadableStream is closed but the WritableStream can still be written to.</dd>
+      <dd>When a FIN packet is received, the socket will enter a "half-open" state where the ReadableStream is closed but the WritableStream can still be written to.</dd>
     </dl>
   </dd>
 </dl>
 
-`AnySocketAddress` type
----------------------------
-
+<h3 id="anysocketaddress-type">`AnySocketAddress` type</h3>
 
 <dl>
   <dt>
-    <dfn>SocketAddress</dfn> dictionary
+    {{SocketAddress}} dictionary
   </dt>
   <dd>
     The address to connect to. For example `{ hostname: "google.com", port: 443 }`.
     <dl>
-      <dt>hostname</dt>
+      <dt>{{hostname}}</dt>
       <dd>A connection is established in plain text.</dd>
-      <dt>port</dt>
+      <dt>{{port}}</dt>
       <dd>A TLS connection is established using default CAs</dd>
     </dl>
   </dd>
   <dt>
-    DOMString
+    {{DOMString}}
   </dt>
   <dd>
     A hostname/port combo separated by a colon. For example `"google.com:443"`.
   </dd>
 </dl>
 
-
-Binding object {#binding-object}
-================================
-
-The <dfn>binding object</dfn> defines socket `connect` options. The options it contains can modify the
-behaviour of the `connect` invoked on it. Some of the options it can define:
-
-* TLS settings
-* The HTTP proxy to use for the socket connection
