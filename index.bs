@@ -86,7 +86,7 @@ A basic example of using connect with an echo server.
 
 <h3 id="socket-class">The {{Socket}} class</h3>
 
-The {{Socket}} class is a instance of the [=socket=] concept. It should not be instantiated directly (`new Socket()`), but instead created by calling {{connect()}}. A constructor for {{Socket}} is intentially not specified, and is left to implementors to create.
+The {{Socket}} class is an instance of the [=socket=] concept. It should not be instantiated directly (`new Socket()`), but instead created by calling {{connect()}}. A constructor for {{Socket}} is intentionally not specified, and is left to implementors to create.
 
 <pre class="idl">
 [Exposed=*]
