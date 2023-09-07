@@ -44,7 +44,7 @@ A socket becomes <i>closed</i> when its {{close()}} method is called. A socket c
 
 A socket can be constructed using a <dfn export id="connect-concept">connect</dfn> method defined in a `sockets` module (early implementations may use `vendor:sockets` for the module name), or defined on a [=binding object=].
 
-The connect method is the primary mechanism for creating a [=socket=] instance. It instantiates a socket with a resource identifier and some configuration values. It should syncronously return a socket instance in a <i>connected</i> state (or an error should be thrown).
+The connect method is the primary mechanism for creating a [=socket=] instance. It instantiates a socket with a resource identifier and some configuration values. It should synchronously return a socket instance in a <i>connected</i> state (or an error should be thrown).
 
 <h3 id="binding-object-concept">Binding Object</h3>
 
