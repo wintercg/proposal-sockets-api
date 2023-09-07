@@ -1,4 +1,4 @@
-<pre class='metadata'>
+<pre class=metadata>
 Title: Sockets API
 Shortname: common-web-platform-api
 Group: wintercg
