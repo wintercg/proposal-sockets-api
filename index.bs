@@ -316,3 +316,12 @@ behaviour of the `connect` invoked on it. Some of the options it can define:
 
 * TLS settings
 * The HTTP proxy to use for the socket connection
+
+The binding object is the primary mechanism for runtimes to introduce unique behavior for the {{connect()}} method. For example, in order to support more TLS settings, a runtime may introduce a `TLSSocket` interface that extends from {{Socket}}. Thus, the binded {{connect()}} method could then utilize additional properties and configuration values that are controlled by the new `TLSSocket` interface.
+
+```js
+const tls_socket = new TLSSocket({ key: '...', cert: '...' });
+tls_socket.connect(); // works just like the `connect()` specified in this document, but also utilizes the configuration passed to `TLSSocket`. 
+```
+
+Additionally, the binding object does not necessarily have to be an instance of a class. It can be any object that has the {{connect()}} method. Cloudflare achieves this through [environment bindings](https://developers.cloudflare.com/workers/configuration/bindings/). 
