@@ -107,7 +107,7 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[WHATWG-STRE
 
 <h4 id="readable-attribute">readable</h4>
 
-The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to 
+The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to.
 
 <div class="example">
   The below example shows typical {{ReadableStream}} usage to read data from a socket:
