@@ -156,7 +156,7 @@ The {{writable}} attribute is a {{WritableStream}} which sends data to the serve
 
 <h4 id="closed-attribute">closed</h4>
 
-The {{closed}} attribute is a promise can be used to keep track of the socket state. It gets resolved under the
+The {{closed}} attribute is a promise which can be used to keep track of the socket state. It gets resolved under the
 following circumstances:
 
 <ul>
