@@ -331,4 +331,3 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     A hostname/port combo separated by a colon. For example `"google.com:443"`.
   </dd>
 </dl>
-
