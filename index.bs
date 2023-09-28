@@ -113,6 +113,10 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[WHATWG-STRE
 
 <h3 id="attributes">Attributes</h3>
 
+<h4 id="info-attribute">info</h4>
+
+The {{info}} attribute is a {{SocketInfo}} which contains information about the state of the socket.
+
 <h4 id="readable-attribute">readable</h4>
 
 The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to.
@@ -323,6 +327,18 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     </dl>
   </dd>
   <dt>
+    {{alpn}} member
+  </dt>
+  <dd>
+    The Application-Layer Protocol Negotiation list to send. If the server agrees with one of the protocols specified in this list, it will return the matching protocol in the {{info}} property. May be specified if and only if {{secureTransport}} is `on` or `starttls`.
+  </dd>
+  <dt>
+    {{sni}} member
+  </dt>
+  <dd>
+    The Server Name Indication TLS option to send as part of the TLS handshake. If specified, requests that the server send a certificate with a matching common name. May be specified if and only if {{secureTransport}} is `on` or `starttls`.
+  </dd>
+  <dt>
     {{allowHalfOpen}} member
   </dt>
   <dd>
@@ -352,6 +368,12 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
   </dt>
   <dd>
     Optionally provides the hostname/port combo of the local network endpoint, for example `"localhost:12345"`.
+  </dd>
+  <dt>
+    {{alpn}} property
+  </dt>
+  <dd>
+    If the server agrees with one of the protocols specified in the `alpn` negotiation list, returns that protocol name as a string, otherwise `null`. 
   </dd>
 </d1>
 
