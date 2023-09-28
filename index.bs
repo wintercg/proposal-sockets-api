@@ -94,7 +94,7 @@ interface Socket {
   readonly attribute ReadableStream readable;
   readonly attribute WritableStream writable;
 
-  readonly attribute Promise&lt;undefined> ready;
+  readonly attribute Promise&lt;undefined> opened;
 
   readonly attribute Promise&lt;undefined> closed;
   Promise&lt;undefined> close(optional any reason);
@@ -156,10 +156,11 @@ The {{writable}} attribute is a {{WritableStream}} which sends data to the serve
   </pre>
 </div>
 
-<h4 id="ready-attribute">ready</h4>
+<h4 id="opened-attribute">opened</h4>
 
-The {{ready}} attribute is a promise that is resolved when the socket connection has been
-successfully established, or is rejected if the connection fails.
+The {{opened}} attribute is a promise that is resolved when the socket connection has been
+successfully established, or is rejected if the connection fails. For sockets use secure-transport,
+the resolution of the {{opened}} promise indicates the completion of the secure handshake.
 
 <h4 id="closed-attribute">closed</h4>
 
