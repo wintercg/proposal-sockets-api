@@ -63,7 +63,7 @@ const tls_socket = new TLSSocket({ key: '...', cert: '...' });
 tls_socket.connect();
 </pre>
 
-Additionally, the binding object does not necessarily have to be an instance of a class, nor does it even have to be JavaScript. It can be any mechanism that exposes the {{connect()}} method. Cloudflare achieves this through [environment bindings](https://developers.cloudflare.com/workers/configuration/bindings/). 
+Additionally, the binding object does not necessarily have to be an instance of a class, nor does it even have to be JavaScript. It can be any mechanism that exposes the {{connect()}} method. Cloudflare achieves this through [environment bindings](https://developers.cloudflare.com/workers/configuration/bindings/).
 
 <h2 id="socket-section">Socket</h2>
 
@@ -94,8 +94,10 @@ interface Socket {
   readonly attribute ReadableStream readable;
   readonly attribute WritableStream writable;
 
+  readonly attribute Promise&lt;undefined> opened;
+
   readonly attribute Promise&lt;undefined> closed;
-  Promise&lt;undefined> close();
+  Promise&lt;undefined> close(optional any reason);
 
   [NewObject] Socket startTls();
 };
@@ -154,6 +156,12 @@ The {{writable}} attribute is a {{WritableStream}} which sends data to the serve
   </pre>
 </div>
 
+<h4 id="opened-attribute">opened</h4>
+
+The {{opened}} attribute is a promise that is resolved when the socket connection has been
+successfully established, or is rejected if the connection fails. For sockets use secure-transport,
+the resolution of the {{opened}} promise indicates the completion of the secure handshake.
+
 <h4 id="closed-attribute">closed</h4>
 
 The {{closed}} attribute is a promise which can be used to keep track of the socket state. It gets resolved under the
@@ -165,7 +173,7 @@ following circumstances:
 </ul>
 
 <div class="note">
-  The current Cloudflare Workers implementation behaves as described above, specifically the 
+  The current Cloudflare Workers implementation behaves as described above, specifically the
   ReadableStream needs to be read until completion for the `closed` promise to resolve, if the
   ReadableStream is not read then even if the server closes the connection the `closed` promise
   will not resolve.
@@ -184,9 +192,13 @@ Cancelling the socket's ReadableStream and closing the socket's WritableStream d
 
 <h3 id="methods">Methods</h3>
 
-<h4 id="close-method">close()</h4>
+<h4 id="close-method">close(optional any reason)</h4>
 
 The {{close()}} method closes the socket and its underlying connection. It returns the same promise as the {{closed}} attribute.
+
+When called, the {{ReadableStream}} and {{WritableStream}} associated with the {{Socket}} will
+be canceled and aborted, respectively. If the {{reason}} argument is specified, the {{reason}}
+will be passed on to both the {{ReadableStream}} and {{WritableStream}}.
 
 <h4 id="starttls-method">startTls()</h4>
 
@@ -284,7 +296,7 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     {{secureTransport}} member
   </dt>
   <dd>
-    The secure transport mode to use. 
+    The secure transport mode to use.
     <dl>
       <dt>{{off}}</dt>
       <dd>A connection is established in plain text.</dd>
