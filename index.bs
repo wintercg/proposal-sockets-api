@@ -286,9 +286,11 @@ The {{connect()}} method performs the following steps:
 
 <ol>
   <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
+  <li>The socket's {{opened}} promise is set to [=a new promise=]. Set |opened|.\[[PromiseIsHandled]] to true.
   <li>The created {{Socket}} instance is returned immediately in a <i>pending</i> state.</li>
   <li>A connection is established to the specified {{SocketAddress}} asynchronously.</li>
-  <li>If the connection fails for any reason, the socket's {{closed}} promise is rejected with a [=SocketError=] describing why the connection failed.</li>
+  <li>Once the connection is established, set |info| to a new {{SocketInfo}}, and [=Resolve=] |opened| with |info|.</li>
+  <li>If the connection fails for any reason, the socket's {{closed}} and {{opened}} promises are rejected with a [=SocketError=] describing why the connection failed.</li>
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
