@@ -90,11 +90,17 @@ The {{Socket}} class is an instance of the [=socket=] concept. It should not be 
 
 <pre class="idl">
 [Exposed=*]
+dictionary SocketInfo {
+  DOMString remoteAddress = null;
+  DOMString localAddress = null;
+};
+
+[Exposed=*]
 interface Socket {
   readonly attribute ReadableStream readable;
   readonly attribute WritableStream writable;
 
-  readonly attribute Promise&lt;undefined> opened;
+  readonly attribute Promise&lt;SocketInfo> opened;
 
   readonly attribute Promise&lt;undefined> closed;
   Promise&lt;undefined> close(optional any reason);
@@ -161,6 +167,11 @@ The {{writable}} attribute is a {{WritableStream}} which sends data to the serve
 The {{opened}} attribute is a promise that is resolved when the socket connection has been
 successfully established, or is rejected if the connection fails. For sockets use secure-transport,
 the resolution of the {{opened}} promise indicates the completion of the secure handshake.
+
+The {{opened}} promise resolves a {{SocketInfo}} dictionary that optionally provides details
+about the connection that has been established.
+
+By default, the {{opened}} promise is {{marked as handled}}.
 
 <h4 id="closed-attribute">closed</h4>
 
@@ -296,7 +307,7 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     {{secureTransport}} member
   </dt>
   <dd>
-    The secure transport mode to use.
+    The secure transport mode to use.f
     <dl>
       <dt>{{off}}</dt>
       <dd>A connection is established in plain text.</dd>
@@ -320,6 +331,24 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     </dl>
   </dd>
 </dl>
+
+<h3 id="socketinfo-dictionary">`SocketInfo` dictionary</h3>
+
+<d1>
+  <dt>
+    {{remoteAddress}} member
+  </dt>
+  <dd>
+    Provides the hostname/port combo of the remote peer the {{Socket}} is connected to, for example `"example.com:443"`.
+    This value may or may not be the same as the address provided to the {{connect()}} method used to create the {{Socket}}.
+  </dd>
+  <dt>
+    {{localAddress}} member
+  </dt>
+  <dd>
+    Optionally provides the hostname/port combo of the local network endpoint, for example `"localhost:12345"`.
+  </dd>
+</d1>
 
 <h3 id="anysocketaddress-type">`AnySocketAddress` type</h3>
 
