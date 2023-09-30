@@ -211,6 +211,8 @@ When called, the {{ReadableStream}} and {{WritableStream}} associated with the {
 be canceled and aborted, respectively. If the {{reason}} argument is specified, the {{reason}}
 will be passed on to both the {{ReadableStream}} and {{WritableStream}}.
 
+If the {{opened}} promise is still pending, it will be rejected with the {{reason}}.
+
 <h4 id="starttls-method">startTls()</h4>
 
 The {{startTls()}} method enables opportunistic TLS (otherwise known as [StartTLS](https://en.wikipedia.org/wiki/Opportunistic_TLS)) which is a requirement for some protocols (primarily postgres/mysql and other DB protocols).
