@@ -90,11 +90,17 @@ The {{Socket}} class is an instance of the [=socket=] concept. It should not be 
 
 <pre class="idl">
 [Exposed=*]
+dictionary SocketInfo {
+  DOMString remoteAddress = null;
+  DOMString localAddress = null;
+};
+
+[Exposed=*]
 interface Socket {
   readonly attribute ReadableStream readable;
   readonly attribute WritableStream writable;
 
-  readonly attribute Promise&lt;undefined> opened;
+  readonly attribute Promise&lt;SocketInfo> opened;
 
   readonly attribute Promise&lt;undefined> closed;
   Promise&lt;undefined> close(optional any reason);
@@ -162,6 +168,11 @@ The {{opened}} attribute is a promise that is resolved when the socket connectio
 successfully established, or is rejected if the connection fails. For sockets use secure-transport,
 the resolution of the {{opened}} promise indicates the completion of the secure handshake.
 
+The {{opened}} promise resolves a {{SocketInfo}} dictionary that optionally provides details
+about the connection that has been established.
+
+By default, the {{opened}} promise is {{marked as handled}}.
+
 <h4 id="closed-attribute">closed</h4>
 
 The {{closed}} attribute is a promise which can be used to keep track of the socket state. It gets resolved under the
@@ -199,6 +210,8 @@ The {{close()}} method closes the socket and its underlying connection. It retur
 When called, the {{ReadableStream}} and {{WritableStream}} associated with the {{Socket}} will
 be canceled and aborted, respectively. If the {{reason}} argument is specified, the {{reason}}
 will be passed on to both the {{ReadableStream}} and {{WritableStream}}.
+
+If the {{opened}} promise is still pending, it will be rejected with the {{reason}}.
 
 <h4 id="starttls-method">startTls()</h4>
 
@@ -275,9 +288,12 @@ The {{connect()}} method performs the following steps:
 
 <ol>
   <li>New {{Socket}} instance is created with each of its attributes initialised immediately.</li>
+  <li>The socket's {{opened}} promise is set to [=a new promise=]. Set |opened|.\[[PromiseIsHandled]] to true.
+  <li>The socket's {{closed}} promise is set to [=a new promise=]. Set |closed|.\[[PromiseIsHandled]] to true.
   <li>The created {{Socket}} instance is returned immediately in a <i>pending</i> state.</li>
   <li>A connection is established to the specified {{SocketAddress}} asynchronously.</li>
-  <li>If the connection fails for any reason, the socket's {{closed}} promise is rejected with a [=SocketError=] describing why the connection failed.</li>
+  <li>Once the connection is established, set |info| to a new {{SocketInfo}}, and [=Resolve=] |opened| with |info|. For a socket using secure transport, the connection is considered to be established once the secure handshake has been completed.</li>
+  <li>If the connection fails for any reason, the socket's {{closed}} and {{opened}} promises are rejected with a [=SocketError=] describing why the connection failed.</li>
   <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
 </ol>
 
@@ -320,6 +336,24 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     </dl>
   </dd>
 </dl>
+
+<h3 id="socketinfo-dictionary">`SocketInfo` dictionary</h3>
+
+<d1>
+  <dt>
+    {{remoteAddress}} member
+  </dt>
+  <dd>
+    Provides the hostname/port combo of the remote peer the {{Socket}} is connected to, for example `"example.com:443"`.
+    This value may or may not be the same as the address provided to the {{connect()}} method used to create the {{Socket}}.
+  </dd>
+  <dt>
+    {{localAddress}} member
+  </dt>
+  <dd>
+    Optionally provides the hostname/port combo of the local network endpoint, for example `"localhost:12345"`.
+  </dd>
+</d1>
 
 <h3 id="anysocketaddress-type">`AnySocketAddress` type</h3>
 
