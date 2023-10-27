@@ -330,7 +330,7 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
     {{alpn}} member
   </dt>
   <dd>
-    The Application-Layer Protocol Negotiation list to send. If the server agrees with one of the protocols specified in this list, it will return the matching protocol in the {{info}} property. May be specified if and only if {{secureTransport}} is `on` or `starttls`.
+    The Application-Layer Protocol Negotiation list to send, as an array of strings. If the server agrees with one of the protocols specified in this list, it will return the matching protocol in the {{info}} property. May be specified if and only if {{secureTransport}} is `on` or `starttls`.
   </dd>
   <dt>
     {{sni}} member
