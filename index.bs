@@ -169,7 +169,7 @@ The {{writable}} attribute is a {{WritableStream}} which sends data to the serve
 <h4 id="opened-attribute">opened</h4>
 
 The {{opened}} attribute is a promise that is resolved when the socket connection has been
-successfully established, or is rejected if the connection fails. For sockets use secure-transport,
+successfully established, or is rejected if the connection fails. For sockets which use secure-transport,
 the resolution of the {{opened}} promise indicates the completion of the secure handshake.
 
 The {{opened}} promise resolves a {{SocketInfo}} dictionary that optionally provides details
