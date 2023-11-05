@@ -93,6 +93,7 @@ The {{Socket}} class is an instance of the [=socket=] concept. It should not be 
 dictionary SocketInfo {
   DOMString remoteAddress = null;
   DOMString localAddress = null;
+  DOMString alpn = null;
 };
 
 [Exposed=*]
@@ -280,6 +281,8 @@ enum SecureTransportKind { "off", "on", "starttls" };
 dictionary SocketOptions {
   SecureTransportKind secureTransport = "off";
   boolean allowHalfOpen = false;
+  DOMString sni = null;
+  DOMString[] alpn = [];
 };
 
 [Exposed=*]
