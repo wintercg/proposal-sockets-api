@@ -8,6 +8,7 @@ URL: https://sockets-api.proposal.wintercg.org/
 Repository: https://github.com/wintercg/proposal-sockets-api
 Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
 Editor: Ethan Arrowood, Vercel https://vercel.com/, ethan.arrowood@vercel.com
+Editor: James M Snell, Cloudflare https://cloudflare.com/, jsnell@cloudflare.com
 Abstract: Sockets API for Non-Browser EcmaScript-based runtimes.
 Markup Shorthands: markdown yes
 Markup Shorthands: idl yes
@@ -41,6 +42,8 @@ A <dfn export id="socket-concept">socket</dfn> represents a TCP connection, from
 A socket becomes <i>closed</i> when its {{close()}} method is called. A socket configured with `allowHalfOpen: false` will close itself when it receives a FIN or RST packet in its read stream.
 
 <h3 id="connect-concept-section">Connect</h3>
+
+<p class="note">The [=connect=] method here is defined in a `sockets` module here only for initial implementation purposes. It is imagined that in a finalized standard definition, the [=connect=] would be exposed as a global or within a [=binding object=]</p>
 
 A socket can be constructed using a <dfn export id="connect-concept">connect</dfn> method defined in a `sockets` module (early implementations may use `vendor:sockets` for the module name), or defined on a [=binding object=].
 
