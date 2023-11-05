@@ -93,7 +93,6 @@ The {{Socket}} class is an instance of the [=socket=] concept. It should not be 
 dictionary SocketInfo {
   DOMString remoteAddress = null;
   DOMString localAddress = null;
-  DOMString sni = null;
   DOMString alpn = null;
 };
 
