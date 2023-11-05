@@ -114,10 +114,6 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[WHATWG-STRE
 
 <h3 id="attributes">Attributes</h3>
 
-<h4 id="info-attribute">info</h4>
-
-The {{info}} attribute is a {{SocketInfo}} which contains information about the state of the socket.
-
 <h4 id="readable-attribute">readable</h4>
 
 The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to.
