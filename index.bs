@@ -147,7 +147,7 @@ The {{readable}} attribute is a {{ReadableStream}} which receives data from the 
   </pre>
 </div>
 
-The ReadableStream currently is defined to operate in byte mode, that is the `type` parameter to the ReadableStream constructor is set to `'bytes'`. This means the stream's controller is {{ReadableByteStreamDController}}.
+<p class="note">The ReadableStream currently is defined to operate in non-byte mode, that is the `type` parameter to the ReadableStream constructor is not set. This means the stream's controller is {{ReadableStreamDefaultController}}. This, however, should be discussed and may be made configurable. It is reasonable, for instance, to assume that sockets used for most TCP cases would be byte-oriented, while sockets used for messages (e.g. UDP) would not.</p>
 
 <h4 id="writable-attribute">writable</h4>
 
