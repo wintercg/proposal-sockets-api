@@ -94,7 +94,7 @@ dictionary SocketInfo {
   DOMString remoteAddress = null;
   DOMString localAddress = null;
   DOMString sni = null;
-  DOMString[] alpn = [];
+  DOMString alpn = null;
 };
 
 [Exposed=*]
