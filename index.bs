@@ -43,7 +43,7 @@ A socket becomes <i>closed</i> when its {{close()}} method is called. A socket c
 
 <h3 id="connect-concept-section">Connect</h3>
 
-<p class="note">The [=connect=] method here is defined in a `sockets` module here only for initial implementation purposes. It is imagined that in a finalized standard definition, the [=connect=] would be exposed as a global or within a [=binding object=]</p>
+<p class="note">The [=connect=] method here is defined in a `sockets` module only for initial implementation purposes. It is imagined that in a finalized standard definition, the [=connect=] would be exposed as a global or within a [=binding object=]</p>
 
 A socket can be constructed using a <dfn export id="connect-concept">connect</dfn> method defined in a `sockets` module (early implementations may use `vendor:sockets` for the module name), or defined on a [=binding object=].
 
@@ -51,7 +51,7 @@ The connect method is the primary mechanism for creating a [=socket=] instance. 
 
 <h3 id="binding-object-concept">Binding Object</h3>
 
-<p class="note">A [=binding object=] in this context is essentially just an object that exposes the a [=connect=] method conformant with this specification. It is anticipated that a runtime may have any number of such objects. This is an area where there is still active discussion on how this should be defined.</p>
+<p class="note">A [=binding object=] in this context is essentially just an object that exposes a [=connect=] method conformant with this specification. It is anticipated that a runtime may have any number of such objects. This is an area where there is still active discussion on how this should be defined.</p>
 
 The <dfn export>binding object</dfn> defines extra socket `connect` options. The options it contains can modify the
 behaviour of the `connect` invoked on it. Some of the options it can define:
