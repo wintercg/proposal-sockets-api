@@ -8,6 +8,7 @@ URL: https://sockets-api.proposal.wintercg.org/
 Repository: https://github.com/wintercg/proposal-sockets-api
 Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
 Editor: Ethan Arrowood, Vercel https://vercel.com/, ethan.arrowood@vercel.com
+Editor: James M Snell, Cloudflare https://cloudflare.com/, jsnell@cloudflare.com
 Abstract: Sockets API for Non-Browser EcmaScript-based runtimes.
 Markup Shorthands: markdown yes
 Markup Shorthands: idl yes
@@ -42,11 +43,15 @@ A socket becomes <i>closed</i> when its {{close()}} method is called. A socket c
 
 <h3 id="connect-concept-section">Connect</h3>
 
+<p class="note">The [=connect=] method here is defined in a `sockets` module only for initial implementation purposes. It is imagined that in a finalized standard definition, the [=connect=] would be exposed as a global or within a [=binding object=]</p>
+
 A socket can be constructed using a <dfn export id="connect-concept">connect</dfn> method defined in a `sockets` module (early implementations may use `vendor:sockets` for the module name), or defined on a [=binding object=].
 
 The connect method is the primary mechanism for creating a [=socket=] instance. It instantiates a socket with a resource identifier and some configuration values. It should synchronously return a socket instance in a <i>pending</i> state (or an error should be thrown). The socket will asynchronously <i>connect</i> depending on the implementation.
 
 <h3 id="binding-object-concept">Binding Object</h3>
+
+<p class="note">A [=binding object=] in this context is essentially just an object that exposes a [=connect=] method conformant with this specification. It is anticipated that a runtime may have any number of such objects. This is an area where there is still active discussion on how this should be defined.</p>
 
 The <dfn export>binding object</dfn> defines extra socket `connect` options. The options it contains can modify the
 behaviour of the `connect` invoked on it. Some of the options it can define:
@@ -60,7 +65,7 @@ The binding object is the primary mechanism for runtimes to introduce unique beh
 
 <pre highlight="js">
 const tls_socket = new TLSSocket({ key: '...', cert: '...' });
-tls_socket.connect();
+tls_socket.connect("example.com:1234");
 </pre>
 
 Additionally, the binding object does not necessarily have to be an instance of a class, nor does it even have to be JavaScript. It can be any mechanism that exposes the {{connect()}} method. Cloudflare achieves this through [environment bindings](https://developers.cloudflare.com/workers/configuration/bindings/).
@@ -114,10 +119,6 @@ The terms {{ReadableStream}} and {{WritableStream}} are defined in [[WHATWG-STRE
 
 <h3 id="attributes">Attributes</h3>
 
-<h4 id="info-attribute">info</h4>
-
-The {{info}} attribute is a {{SocketInfo}} which contains information about the state of the socket.
-
 <h4 id="readable-attribute">readable</h4>
 
 The {{readable}} attribute is a {{ReadableStream}} which receives data from the server the socket is connected to.
@@ -146,9 +147,7 @@ The {{readable}} attribute is a {{ReadableStream}} which receives data from the 
   </pre>
 </div>
 
-The ReadableStream operates in non-byte mode, that is the `type` parameter to the
-ReadableStream constructor is not set.
-This means the stream's controller is {{ReadableStreamDefaultController}}.
+<p class="note">The ReadableStream currently is defined to operate in non-byte mode, that is the `type` parameter to the ReadableStream constructor is not set. This means the stream's controller is {{ReadableStreamDefaultController}}. This, however, should be discussed and may be made configurable. It is reasonable, for instance, to assume that sockets used for most TCP cases would be byte-oriented, while sockets used for messages (e.g. UDP) would not.</p>
 
 <h4 id="writable-attribute">writable</h4>
 
@@ -254,6 +253,8 @@ The method must fail with an [=SocketError=] if:
 
 <h3 id="socket-error">SocketError</h3>
 
+<p class="note">Arguably, this should be a type of {{DOMException}} rather than {{TypeError}}. More discussion is necessary on the form and structure of socket-related errors.</p>
+
 <dfn export>SocketError</dfn> is an instance of {{TypeError}}. The error message should start with `"SocketError: "`.
 
 <div class="example">
@@ -300,11 +301,11 @@ The {{connect()}} method performs the following steps:
   <li>The created {{Socket}} instance is returned immediately in a <i>pending</i> state.</li>
   <li>A connection is established to the specified {{SocketAddress}} asynchronously.</li>
   <li>Once the connection is established, set |info| to a new {{SocketInfo}}, and [=Resolve=] |opened| with |info|. For a socket using secure transport, the connection is considered to be established once the secure handshake has been completed.</li>
-  <li>If the connection fails for any reason, the socket's {{closed}} and {{opened}} promises are rejected with a [=SocketError=] describing why the connection failed.</li>
-  <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately.</li>
+  <li>If the connection fails for any reason, set |error| to a new [=SocketError=] and reject the socket's {{closed}} and {{opened}} promises with |error|. Also, the {{readable}} is canceled with |error| and the {{writable}} is aborted with |error|.</li>
+  <li>The instance's {{ReadableStream}} and {{WritableStream}} streams can be used immediately but may not actually transmit or receive data until the socket is fully opened.</li>
 </ol>
 
-At any point during the creation of the {{Socket}} instance, `connect` may throw a [=SocketError=]. One case where this can happen is if the input address is incorrectly formatted. Errors which occur asynchronously (after the socket instance has been returned) must reject the socket's {{closed}} promise.
+At any point during the creation of the {{Socket}} instance, `connect` may throw a [=SocketError=]. One case where this can happen is if the input address is incorrectly formatted.
 
 <div class="note">
   The implementation may consider blocking connections to certain hostname/port combinations which can pose a threat of abuse or security vulnerability.
