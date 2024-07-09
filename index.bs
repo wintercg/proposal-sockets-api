@@ -7,7 +7,7 @@ Level: none
 URL: https://sockets-api.proposal.wintercg.org/
 Repository: https://github.com/wintercg/proposal-sockets-api
 Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
-Editor: Ethan Arrowood, Vercel https://vercel.com/, ethan.arrowood@vercel.com
+Editor: Ethan Arrowood, ethan@arrowood.dev
 Editor: James M Snell, Cloudflare https://cloudflare.com/, jsnell@cloudflare.com
 Abstract: Sockets API for Non-Browser EcmaScript-based runtimes.
 Markup Shorthands: markdown yes
