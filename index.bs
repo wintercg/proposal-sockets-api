@@ -359,7 +359,7 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
 
 <h3 id="socketinfo-dictionary">`SocketInfo` dictionary</h3>
 
-<d1>
+<dl>
   <dt>
     {{remoteAddress}} member
   </dt>
@@ -379,7 +379,7 @@ At any point during the creation of the {{Socket}} instance, `connect` may throw
   <dd>
     If the server agrees with one of the protocols specified in the `alpn` negotiation list, returns that protocol name as a string, otherwise `null`. 
   </dd>
-</d1>
+</dl>
 
 <h3 id="anysocketaddress-type">`AnySocketAddress` type</h3>
 
