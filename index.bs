@@ -4,7 +4,7 @@ Shortname: common-web-platform-api
 Group: wintercg
 Status: w3c/CG-DRAFT
 Level: none
-URL: https://sockets-api.proposal.wintercg.org/
+URL: https://sockets-api.proposal.wintertc.org/
 Repository: https://github.com/wintercg/proposal-sockets-api
 Editor: Dominik Picheta, Cloudflare https://cloudflare.com/, dominik@cloudflare.com
 Editor: Ethan Arrowood, ethan@arrowood.dev
