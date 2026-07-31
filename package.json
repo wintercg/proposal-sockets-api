@@ -2,6 +2,6 @@
   "name": "tc55-sockets-api",
   "private": true,
   "scripts": {
-    "build": "mkdir -p out && curl --retry 2 --fail https://api.csswg.org/bikeshed/ --output out/index.html --header \"Accept: text/plain, text/html\" -F die-on=fatal -F file=@index.bs"
+    "build": "mkdir -p out && curl --retry 2 --fail -L https://www.w3.org/publications/spec-generator/ --output out/index.html -F type=bikeshed-spec -F die-on=fatal -F file=@index.bs"
   }
 }
