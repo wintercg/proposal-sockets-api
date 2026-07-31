@@ -1,0 +1,7 @@
+{
+  "name": "tc55-sockets-api",
+  "private": true,
+  "scripts": {
+    "build": "mkdir -p out && curl --retry 2 --fail https://api.csswg.org/bikeshed/ --output out/index.html --header \"Accept: text/plain, text/html\" -F die-on=fatal -F file=@index.bs"
+  }
+}
