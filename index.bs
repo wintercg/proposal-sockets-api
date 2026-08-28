@@ -111,6 +111,7 @@ interface Socket {
   Promise&lt;undefined> close(optional any reason);
 
   readonly attribute boolean upgraded;
+  readonly attribute String secureTransport;
 
   [NewObject] Socket startTls();
 };
@@ -209,6 +210,16 @@ Cancelling the socket's ReadableStream and closing the socket's WritableStream d
 <h4 id="upgraded-attribute">upgraded</h4>
 
 The {{upgraded}} attribute is a boolean flag that indicates whether the socket has been upgraded to a secure connection (using `startTLS()`).
+
+<h4 id="secureTransport-attribute">secureTransport</h4>
+
+The {{secureTransport}} attribute is a string value indicating the type of secure transport used by the socket. Possible values are:
+
+<ul>
+  <li>"on" - TLS/SSL connection</li>
+  <li>"starttls" - Opportunistic TLS connection</li>
+  <li>"off" - Insecure TLS connection</li>
+</ul>
 
 <h3 id="methods">Methods</h3>
 
